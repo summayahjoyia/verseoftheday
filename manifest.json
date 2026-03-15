@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Quran — Verse of the Day",
+  "version": "1.0",
+  "description": "A beautiful new tab page showing a different Quran verse every time you open Chrome.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "permissions": [],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
