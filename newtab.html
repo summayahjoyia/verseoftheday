@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Tab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Lora:ital,wght@0,400;0,500;1,400&family=Noto+Nastaliq+Urdu:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Light theme  */
+    :root {
+      --bg:           #f8f7f4;
+      --surface:      #ffffff;
+      --surface-2:    #f0ede8;
+      --border:       #e4e0d8;
+      --text:         #1c1917;
+      --text-soft:    #57534e;
+      --text-muted:   #a8a29e;
+      --gold:         #b5832a;
+      --gold-light:   #e8c97a;
+      --shadow:       0 2px 12px rgba(0,0,0,0.08);
+      --shadow-focus: 0 4px 24px rgba(0,0,0,0.13);
+      --shortcut-bg:  rgba(0,0,0,0.06);
+      --shortcut-hover: rgba(0,0,0,0.10);
+    }
+
+    /* ── Dark theme ── */
+    [data-theme="dark"] {
+      --bg:           #1a1917;
+      --surface:      #242220;
+      --surface-2:    #2e2b28;
+      --border:       #3a3632;
+      --text:         #f0ece6;
+      --text-soft:    #c4bdb5;
+      --text-muted:   #7a726a;
+      --gold:         #d4a855;
+      --gold-light:   #b8872a;
+      --shadow:       0 2px 12px rgba(0,0,0,0.4);
+      --shadow-focus: 0 4px 24px rgba(0,0,0,0.6);
+      --shortcut-bg:  rgba(255,255,255,0.07);
+      --shortcut-hover: rgba(255,255,255,0.12);
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: 'Lora', Georgia, serif;
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px 24px 24px;
+      gap: 0;
+    }
+
+    /* Dark mode toggle */
+    .theme-toggle {
+      position: fixed;
+      bottom: 44px;
+      left: 16px;
+      top: unset;
+      right: unset;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: var(--shadow);
+      transition: background 0.2s, border-color 0.2s;
+      z-index: 100;
+    }
+    .theme-toggle:hover { background: var(--surface-2); }
+
+    /* Date display */
+    .clock {
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    /* Search block*/
+    .search-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 580px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    .google-logo { height: 36px; }
+
+    /* Dark mode */
+    [data-theme="dark"] .google-logo { filter: brightness(0.9); }
+
+    .search-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 9999px;
+      padding: 0 20px;
+      gap: 12px;
+      box-shadow: var(--shadow);
+      transition: box-shadow 0.2s, border-color 0.2s, background 0.3s;
+    }
+    .search-bar:focus-within { box-shadow: var(--shadow-focus); border-color: var(--gold-light); }
+    .search-icon { color: var(--text-muted); flex-shrink: 0; }
+    .search-bar input {
+      flex: 1; border: none; outline: none;
+      background: transparent; font-family: inherit;
+      font-size: 1rem; color: var(--text); padding: 14px 0;
+    }
+    .search-bar input::placeholder { color: var(--text-muted); }
+
+    .search-buttons { display: flex; gap: 10px; }
+    .search-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 9px 18px;
+      font-family: inherit; font-size: 0.85rem;
+      color: var(--text-soft); cursor: pointer;
+      transition: background 0.15s;
+    }
+    .search-btn:hover { filter: brightness(0.95); }
+
+    /* Shortcuts grid */
+    .shortcuts {
+      display: grid;
+      grid-template-columns: repeat(4, 72px);
+      gap: 6px;
+      margin-top: 10px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .shortcut {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      padding: 6px 4px;
+      border-radius: 12px;
+      transition: background 0.15s;
+    }
+    .shortcut:hover { background: var(--shortcut-hover); }
+
+    .shortcut__icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--shortcut-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      overflow: hidden;
+      transition: background 0.15s;
+    }
+
+    .shortcut__icon img {
+      width: 24px; height: 24px;
+      object-fit: contain;
+    }
+
+    .shortcut__label {
+      font-family: 'Lora', serif;
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      text-align: center;
+      max-width: 72px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 14px;
+      width: 100%; max-width: 480px;
+      margin: 20px 0 0;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+    .divider__line { flex: 1; height: 1px; background: var(--border); }
+    .divider__label {
+      font-size: 0.7rem; letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--text-muted); white-space: nowrap;
+    }
+    .divider__gem {
+      width: 5px; height: 5px; background: var(--gold-light);
+      transform: rotate(45deg); flex-shrink: 0;
+    }
+
+    /* Verse card */
+    .verse-card {
+      width: 100%; max-width: 580px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 32px 18px;
+      box-shadow: var(--shadow);
+      text-align: center;
+      margin-top: 10px;
+      animation: fadeUp 0.6s 0.4s ease both;
+      transition: background 0.3s, border-color 0.3s;
+    }
+
+    /* Language dropdown*/
+    .lang-row {
+      display: flex; justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .lang-select-wrapper { position: relative; display: inline-flex; align-items: center; }
+    .lang-select-wrapper::after {
+      content: ''; position: absolute; right: 10px;
+      width: 10px; height: 10px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a8a29e'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: center;
+      pointer-events: none;
+    }
+    #lang-select {
+      appearance: none;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 30px 6px 12px;
+      font-family: 'Lora', serif; font-size: 0.78rem;
+      color: var(--text-soft); cursor: pointer; outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    #lang-select:hover { border-color: var(--gold-light); }
+    #lang-select:focus { border-color: var(--gold); }
+
+    /* ── Arabic ── */
+    .verse-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 1.4rem; line-height: 1.8; direction: rtl;
+      color: var(--text); margin-bottom: 10px;
+      min-height: 2em; display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Translation ── */
+    .verse-translation {
+      font-size: 0.88rem; font-style: italic; line-height: 1.7;
+      color: var(--text-soft); margin-bottom: 10px;
+      min-height: 2em; display: flex; align-items: center; justify-content: center;
+    }
+    .verse-translation.urdu {
+      font-family: 'Noto Nastaliq Urdu', serif;
+      font-style: normal; font-size: 1.1rem;
+      line-height: 2.2; direction: rtl;
+    }
+
+    /* Reference  */
+    .verse-ref {
+      font-size: 0.7rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--gold);
+      margin-bottom: 16px;
+    }
+
+    /* Tafseer button  */
+    #tafseer-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 5px 16px;
+      font-family: 'Lora', serif; font-size: 0.75rem;
+      color: var(--text-muted); cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #tafseer-btn:hover { border-color: var(--gold-light); color: var(--gold); }
+
+    /*  Tafseer panel */
+    #tafseer-panel {
+      display: none;
+      margin-top: 18px; padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem; line-height: 1.85;
+      color: var(--text-soft); text-align: left;
+    }
+
+    /* Loading dots*/
+    .dots { display: inline-flex; gap: 5px; align-items: center; }
+    .dots span {
+      width: 5px; height: 5px; background: var(--gold-light);
+      border-radius: 50%; animation: dot 1.2s ease-in-out infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot {
+      0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+      40%            { opacity: 1;    transform: scale(1);   }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* Google top bar  */
+    .google-bar {
+      position: fixed;
+      top: 0; right: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      z-index: 100;
+    }
+
+    .google-bar a {
+      font-family: arial, sans-serif;
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      text-decoration: none;
+      padding: 6px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+    .google-bar a:hover { background: var(--shortcut-hover); }
+
+
+
+    .google-bar__profile {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: #8ab4f8;
+      display: flex; align-items: center; justify-content: center;
+      font-family: arial, sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      text-decoration: none;
+      margin-left: 4px;
+      transition: box-shadow 0.15s;
+      flex-shrink: 0;
+    }
+    .google-bar__profile:hover { box-shadow: 0 0 0 3px rgba(138,180,248,0.3); }
+
+    /* Credits footer */
+    .credits {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: arial, sans-serif;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      z-index: 100;
+    }
+    .credits a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .credits a:hover { color: var(--gold); }
+    .credits__dot {
+      width: 3px; height: 3px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      opacity: 0.5;
+    }
+
+    /*COLOUR THEMES */
+
+    /* Desert — warm sandy parchment */
+    [data-colour="desert"] {
+      --bg: #f5efe6; --surface: #fdf8f2; --surface-2: #ede3d4;
+      --border: #d4c4a8; --text: #2c1f0e; --text-soft: #5c4a32;
+      --text-muted: #a08060; --gold: #b8762a; --gold-light: #d4a855;
+      --shortcut-bg: rgba(180,140,80,0.1); --shortcut-hover: rgba(180,140,80,0.18);
+    }
+    [data-colour="desert"][data-theme="dark"] {
+      --bg: #1e1508; --surface: #2a1e0f; --surface-2: #362a18;
+      --border: #4a3820; --text: #f0e6d0; --text-soft: #c4a878;
+      --text-muted: #7a6040; --gold: #d4a855; --gold-light: #b8762a;
+      --shortcut-bg: rgba(180,140,80,0.12); --shortcut-hover: rgba(180,140,80,0.2);
+    }
+
+    /* Forest — deep greens */
+    [data-colour="forest"] {
+      --bg: #f0f5f0; --surface: #ffffff; --surface-2: #e4ede4;
+      --border: #b8d4b8; --text: #0f2010; --text-soft: #2d5230;
+      --text-muted: #6a9a6a; --gold: #4a8c4a; --gold-light: #78b878;
+      --shortcut-bg: rgba(60,120,60,0.08); --shortcut-hover: rgba(60,120,60,0.15);
+    }
+    [data-colour="forest"][data-theme="dark"] {
+      --bg: #0a140a; --surface: #111e11; --surface-2: #182818;
+      --border: #1e3c1e; --text: #d4edd4; --text-soft: #8abf8a;
+      --text-muted: #4a7a4a; --gold: #78b878; --gold-light: #4a8c4a;
+      --shortcut-bg: rgba(60,120,60,0.12); --shortcut-hover: rgba(60,120,60,0.2);
+    }
+
+    /* Ocean — cool blues */
+    [data-colour="ocean"] {
+      --bg: #f0f4f8; --surface: #ffffff; --surface-2: #e2ecf4;
+      --border: #b0cce0; --text: #0c1e2e; --text-soft: #2a5070;
+      --text-muted: #6090b0; --gold: #2a78b0; --gold-light: #60a8d8;
+      --shortcut-bg: rgba(40,100,160,0.08); --shortcut-hover: rgba(40,100,160,0.15);
+    }
+    [data-colour="ocean"][data-theme="dark"] {
+      --bg: #060e18; --surface: #0c1a28; --surface-2: #122438;
+      --border: #1a3450; --text: #d0e8f8; --text-soft: #80b8d8;
+      --text-muted: #406080; --gold: #60a8d8; --gold-light: #2a78b0;
+      --shortcut-bg: rgba(40,100,160,0.15); --shortcut-hover: rgba(40,100,160,0.25);
+    }
+
+    /* Rose — soft pinks */
+    [data-colour="rose"] {
+      --bg: #fdf4f5; --surface: #ffffff; --surface-2: #fae8ea;
+      --border: #e8c0c8; --text: #2e0e14; --text-soft: #7a3040;
+      --text-muted: #c07080; --gold: #c04060; --gold-light: #e08090;
+      --shortcut-bg: rgba(180,60,80,0.08); --shortcut-hover: rgba(180,60,80,0.14);
+    }
+    [data-colour="rose"][data-theme="dark"] {
+      --bg: #180608; --surface: #240c10; --surface-2: #301218;
+      --border: #501828; --text: #f8d8e0; --text-soft: #d898a8;
+      --text-muted: #804858; --gold: #e08090; --gold-light: #c04060;
+      --shortcut-bg: rgba(180,60,80,0.12); --shortcut-hover: rgba(180,60,80,0.2);
+    }
+
+    /* Midnight — deep navy */
+    [data-colour="midnight"] {
+      --bg: #f0f2f8; --surface: #ffffff; --surface-2: #e4e8f4;
+      --border: #b8c4e0; --text: #0a0e28; --text-soft: #2a3468;
+      --text-muted: #6878b0; --gold: #3848a8; --gold-light: #6878d0;
+      --shortcut-bg: rgba(40,56,160,0.08); --shortcut-hover: rgba(40,56,160,0.15);
+    }
+    [data-colour="midnight"][data-theme="dark"] {
+      --bg: #04060e; --surface: #0a0e1e; --surface-2: #10162e;
+      --border: #181e40; --text: #d0d8f8; --text-soft: #8898d8;
+      --text-muted: #3848a8; --gold: #6878d0; --gold-light: #3848a8;
+      --shortcut-bg: rgba(40,56,160,0.15); --shortcut-hover: rgba(40,56,160,0.25);
+    }
+
+    /* Monochrome — black and white */
+    [data-colour="mono"] {
+      --bg: #f8f8f8; --surface: #ffffff; --surface-2: #eeeeee;
+      --border: #cccccc; --text: #111111; --text-soft: #444444;
+      --text-muted: #999999; --gold: #333333; --gold-light: #888888;
+      --shortcut-bg: rgba(0,0,0,0.06); --shortcut-hover: rgba(0,0,0,0.12);
+    }
+    [data-colour="mono"][data-theme="dark"] {
+      --bg: #0a0a0a; --surface: #141414; --surface-2: #1e1e1e;
+      --border: #2e2e2e; --text: #f0f0f0; --text-soft: #aaaaaa;
+      --text-muted: #666666; --gold: #cccccc; --gold-light: #888888;
+      --shortcut-bg: rgba(255,255,255,0.06); --shortcut-hover: rgba(255,255,255,0.12);
+    }
+
+    
+
+    /* Theme colour dropdown */
+    .colour-picker {
+      position: fixed;
+      bottom: 12px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 100;
+    }
+
+    .colour-picker label {
+      font-family: arial, sans-serif;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+    }
+
+    #colour-select {
+      appearance: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 4px 24px 4px 10px;
+      font-family: arial, sans-serif;
+      font-size: 0.68rem;
+      color: var(--text-soft);
+      cursor: pointer;
+      outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23a8a29e'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+      transition: border-color 0.15s;
+    }
+    #colour-select:hover { border-color: var(--gold-light); }
+    #colour-select:focus { border-color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- Google-style top bar -->
+  <div class="google-bar">
+    <a href="https://mail.google.com" target="_blank">Gmail</a>
+    <a href="https://images.google.com" target="_blank">Images</a>
+    <a class="google-bar__profile" href="https://myaccount.google.com" target="_blank" title="Google Account">G</a>
+  </div>
+  <!-- Dark mode toggle button — moon for light mode, sun for dark -->
+  <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
+
+  <div class="clock" id="clock"></div>
+
+  <div class="search-block">
+    <svg class="google-logo" viewBox="0 0 272 92" xmlns="http://www.w3.org/2000/svg">
+      <path fill="#EA4335" d="M115.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18C71.25 34.32 81.24 25 93.5 25s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44S80.99 39.2 80.99 47.18c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#FBBC05" d="M163.75 47.18c0 12.77-9.99 22.18-22.25 22.18s-22.25-9.41-22.25-22.18c0-12.85 9.99-22.18 22.25-22.18s22.25 9.32 22.25 22.18zm-9.74 0c0-7.98-5.79-13.44-12.51-13.44s-12.51 5.46-12.51 13.44c0 7.9 5.79 13.44 12.51 13.44s12.51-5.55 12.51-13.44z"/>
+      <path fill="#4285F4" d="M209.75 26.34v39.82c0 16.38-9.66 23.07-21.08 23.07-10.75 0-17.22-7.19-19.66-13.07l8.48-3.53c1.51 3.61 5.21 7.87 11.17 7.87 7.31 0 11.84-4.51 11.84-13v-3.19h-.34c-2.18 2.69-6.38 5.04-11.68 5.04-11.09 0-21.25-9.66-21.25-22.09 0-12.52 10.16-22.26 21.25-22.26 5.29 0 9.49 2.35 11.68 4.96h.34v-3.61h9.25zm-8.56 20.92c0-7.81-5.21-13.52-11.84-13.52-6.72 0-12.35 5.71-12.35 13.52 0 7.73 5.63 13.36 12.35 13.36 6.63 0 11.84-5.63 11.84-13.36z"/>
+      <path fill="#34A853" d="M225 3v65h-9.5V3h9.5z"/>
+      <path fill="#EA4335" d="M262.02 54.48l7.56 5.04c-2.44 3.61-8.32 9.83-18.48 9.83-12.6 0-22.01-9.74-22.01-22.18 0-13.19 9.49-22.18 20.92-22.18 11.51 0 17.14 9.16 18.98 14.11l1.01 2.52-29.65 12.28c2.27 4.45 5.8 6.72 10.75 6.72 4.96 0 8.4-2.44 10.92-6.14zm-23.27-7.98l19.82-8.23c-1.09-2.77-4.37-4.7-8.23-4.7-4.95 0-11.84 4.37-11.59 12.93z"/>
+      <path fill="#4285F4" d="M35.29 41.41V32h31.36c.31 1.64.47 3.58.47 5.68 0 7.06-1.93 15.79-8.15 22.01-6.05 6.3-13.78 9.66-24.03 9.66C16.32 69.35.36 53.89.36 35.28.36 16.67 16.32 1.21 34.94 1.21c10.5 0 17.98 4.12 23.6 9.49l-6.64 6.64c-4.03-3.78-9.49-6.72-16.97-6.72-13.86 0-24.7 11.17-24.7 25.03 0 13.86 10.84 25.03 24.7 25.03 8.99 0 14.11-3.61 17.39-6.89 2.66-2.66 4.41-6.46 5.1-11.65l-22.13.07z"/>
+    </svg>
+
+    <div class="search-bar">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input type="text" placeholder="Search Google or type a URL" id="search-input" autocomplete="off" />
+    </div>
+
+    <div class="search-buttons">
+      <button class="search-btn" id="google-search-btn">Google Search</button>
+      <button class="search-btn" id="lucky-btn">I'm Feeling Lucky</button>
+    </div>
+
+    <!-- Top sites shortcuts grid — populated by JS via chrome.topSites API -->
+    <div class="shortcuts" id="shortcuts"></div>
+  </div>
+
+  <div class="divider">
+    <div class="divider__line"></div>
+    <div class="divider__gem"></div>
+    <span class="divider__label">Verse of the Day</span>
+    <div class="divider__gem"></div>
+    <div class="divider__line"></div>
+  </div>
+
+  <div class="verse-card">
+    <div class="lang-row">
+      <div class="lang-select-wrapper">
+        <select id="lang-select"></select>
+      </div>
+    </div>
+    <div class="verse-arabic" id="arabic">
+      <span class="dots"><span></span><span></span><span></span></span>
+    </div>
+    <div class="verse-translation" id="translation">
+      <span class="dots"><span></span><span></span><span></span></span>
+    </div>
+    <div class="verse-ref" id="ref"></div>
+    <button id="tafseer-btn">Show Tafseer</button>
+    <div id="tafseer-panel"></div>
+  </div>
+
+
+  <!-- Colour theme picker -->
+  <div class="colour-picker">
+    <label for="colour-select">Theme</label>
+    <select id="colour-select">
+      <option value="default">Default</option>
+      <option value="desert">Desert</option>
+      <option value="forest">Forest</option>
+      <option value="ocean">Ocean</option>
+      <option value="rose">Rose</option>
+      <option value="midnight">Midnight</option>
+      <option value="mono">Monochrome</option>
+    </select>
+  </div>
+
+  <!-- Source credits — important for Quran accuracy transparency -->
+  <div class="credits">
+    <span>Translation: <a href="https://alquran.cloud" target="_blank">AlQuran Cloud</a></span>
+    <div class="credits__dot"></div>
+    <span>Tafseer: <a href="https://quran.com" target="_blank">Quran.com</a></span>
+    <div class="credits__dot"></div>
+    <span>Editions: <a href="https://alquran.cloud/api" target="_blank">View sources</a></span>
+  </div>
+
+  <script src="newtab.js"></script>
+</body>
+</html>
