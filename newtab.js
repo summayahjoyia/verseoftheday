@@ -1,36 +1,37 @@
-
+// ─────────────────────────────────────────────
 // API CONFIGURATION
+// ─────────────────────────────────────────────
 
-
-const API_BASE = 'https://api.alquran.cloud/v1/ayah';
+const API_BASE       = 'https://api.alquran.cloud/v1/ayah';
 const ARABIC_EDITION = 'quran-uthmani';
 
+const STORAGE_KEY = 'quran-ext-language';
+const THEME_KEY   = 'quran-ext-theme';
+const COLOUR_KEY  = 'quran-ext-colour';
+
 // tafseerId from api.quran.com/api/v4/resources/tafsirs
-// Languages without a native tafseer fall back to English Ibn Kathir (169)
 const LANGUAGES = [
-  { label: "English",     edition: "en.sahih",       tafseerId: 169 }, // Ibn Kathir (English)
-  { label: "Urdu",        edition: "ur.ahmedali",    tafseerId: 160 }, // Ibn Kathir (Urdu)
-  { label: "French",      edition: "fr.hamidullah",  tafseerId: 169 }, // fallback English
-  { label: "Spanish",     edition: "es.asad",        tafseerId: 169 }, // fallback English
-  { label: "German",      edition: "de.bubenheim",   tafseerId: 169 }, // fallback English
-  { label: "Turkish",     edition: "tr.diyanet",     tafseerId: 169 }, // fallback English
-  { label: "Indonesian",  edition: "id.indonesian",  tafseerId: 169 }, // fallback English
-  { label: "Bengali",     edition: "bn.bengali",     tafseerId: 164 }, // Ibn Kathir (Bengali)
-  { label: "Russian",     edition: "ru.kuliev",      tafseerId: 170 }, // Al-Sa'di (Russian)
-  { label: "Dutch",       edition: "nl.keyzer",      tafseerId: 169 }, // fallback English
-  { label: "Bosnian",     edition: "bs.korkut",      tafseerId: 169 }, // fallback English
-  { label: "Hindi",       edition: "hi.hindi",       tafseerId: 169 }, // fallback English
-  { label: "Swahili",     edition: "sw.barwani",     tafseerId: 169 }, // fallback English
-  { label: "Malayalam",   edition: "ml.abdulhameed", tafseerId: 169 }, // fallback English
-  { label: "Persian",     edition: "fa.ansarian",    tafseerId: 169 }, // fallback English
+  { label: "English",     edition: "en.sahih",       tafseerId: 169 },
+  { label: "Urdu",        edition: "ur.ahmedali",    tafseerId: 160 },
+  { label: "French",      edition: "fr.hamidullah",  tafseerId: 169 },
+  { label: "Spanish",     edition: "es.asad",        tafseerId: 169 },
+  { label: "German",      edition: "de.bubenheim",   tafseerId: 169 },
+  { label: "Turkish",     edition: "tr.diyanet",     tafseerId: 169 },
+  { label: "Indonesian",  edition: "id.indonesian",  tafseerId: 169 },
+  { label: "Bengali",     edition: "bn.bengali",     tafseerId: 164 },
+  { label: "Russian",     edition: "ru.kuliev",      tafseerId: 170 },
+  { label: "Dutch",       edition: "nl.keyzer",      tafseerId: 169 },
+  { label: "Bosnian",     edition: "bs.korkut",      tafseerId: 169 },
+  { label: "Hindi",       edition: "hi.hindi",       tafseerId: 169 },
+  { label: "Swahili",     edition: "sw.barwani",     tafseerId: 169 },
+  { label: "Malayalam",   edition: "ml.abdulhameed", tafseerId: 169 },
+  { label: "Persian",     edition: "fa.ansarian",    tafseerId: 169 },
 ];
 
-const STORAGE_KEY     = 'quran-ext-language';
-const THEME_KEY       = 'quran-ext-theme';      // stores 'light' or 'dark'
 
-
+// ─────────────────────────────────────────────
 // QURAN DATA
-
+// ─────────────────────────────────────────────
 
 const SURAH_LENGTHS = [
   7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,
@@ -63,8 +64,9 @@ const SURAH_NAMES = [
 ];
 
 
+// ─────────────────────────────────────────────
 // DARK MODE
-
+// ─────────────────────────────────────────────
 
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
@@ -72,62 +74,155 @@ function applyTheme(theme) {
 }
 
 function initTheme() {
-  // Check for a saved manual preference first
   const saved = localStorage.getItem(THEME_KEY);
-  if (saved) {
-    applyTheme(saved);
-    return;
-  }
-  // Otherwise follow the system preference (prefers-color-scheme)
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyTheme(prefersDark ? 'dark' : 'light');
+  if (saved) { applyTheme(saved); return; }
+  applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 }
 
 function toggleTheme() {
   const current = document.documentElement.getAttribute('data-theme');
   const next    = current === 'dark' ? 'light' : 'dark';
-  // Save manual override so it persists across tabs
   localStorage.setItem(THEME_KEY, next);
   applyTheme(next);
+  // Re-apply colour theme after switching so it recalculates for the new mode
+  const savedColour = localStorage.getItem(COLOUR_KEY) || DEFAULT_COLOUR;
+  setTimeout(() => applyColour(savedColour), 10);
 }
 
-
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-  if (!localStorage.getItem(THEME_KEY)) {
-    applyTheme(e.matches ? 'dark' : 'light');
-  }
+  if (!localStorage.getItem(THEME_KEY)) applyTheme(e.matches ? 'dark' : 'light');
 });
 
 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 initTheme();
 
 
+// ─────────────────────────────────────────────
+// COLOUR PICKER
+// ─────────────────────────────────────────────
 
+const DEFAULT_COLOUR = '#b5832a'; // default gold accent
+
+// Convert hex to RGB object
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return { r, g, b };
+}
+
+// Convert RGB to hex string
+function rgbToHex(r, g, b) {
+  return '#' + [r,g,b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2,'0')).join('');
+}
+
+// Mix a colour toward white (factor 0=original, 1=white)
+function lighten(r, g, b, factor) {
+  return {
+    r: r + (255 - r) * factor,
+    g: g + (255 - g) * factor,
+    b: b + (255 - b) * factor
+  };
+}
+
+// Mix a colour toward black (factor 0=original, 1=black)
+function darken(r, g, b, factor) {
+  return { r: r * (1-factor), g: g * (1-factor), b: b * (1-factor) };
+}
+
+// Generate a full theme from a single picked colour.
+// Works for both light and dark mode — dark mode vars are handled separately.
+function applyColour(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const root   = document.documentElement;
+
+  if (isDark) {
+    // Dark mode: use the colour to tint dark backgrounds
+    const bg      = darken(r, g, b, 0.85);
+    const surface = darken(r, g, b, 0.78);
+    const surf2   = darken(r, g, b, 0.72);
+    const border  = darken(r, g, b, 0.60);
+    const textCol = lighten(r, g, b, 0.85);
+    const textSoft= lighten(r, g, b, 0.55);
+    const textMut = lighten(r, g, b, 0.25);
+    const gold    = lighten(r, g, b, 0.20);
+    const goldL   = { r, g, b };
+
+    root.style.setProperty('--bg',           rgbToHex(bg.r,bg.g,bg.b));
+    root.style.setProperty('--surface',      rgbToHex(surface.r,surface.g,surface.b));
+    root.style.setProperty('--surface-2',    rgbToHex(surf2.r,surf2.g,surf2.b));
+    root.style.setProperty('--border',       rgbToHex(border.r,border.g,border.b));
+    root.style.setProperty('--text',         rgbToHex(textCol.r,textCol.g,textCol.b));
+    root.style.setProperty('--text-soft',    rgbToHex(textSoft.r,textSoft.g,textSoft.b));
+    root.style.setProperty('--text-muted',   rgbToHex(textMut.r,textMut.g,textMut.b));
+    root.style.setProperty('--gold',         rgbToHex(gold.r,gold.g,gold.b));
+    root.style.setProperty('--gold-light',   rgbToHex(goldL.r,goldL.g,goldL.b));
+    root.style.setProperty('--shortcut-bg',  `rgba(${r},${g},${b},0.12)`);
+    root.style.setProperty('--shortcut-hover',`rgba(${r},${g},${b},0.2)`);
+  } else {
+    // Light mode: use the colour to tint light backgrounds
+    const bg      = lighten(r, g, b, 0.88);
+    const surface = lighten(r, g, b, 0.96);
+    const surf2   = lighten(r, g, b, 0.82);
+    const border  = lighten(r, g, b, 0.65);
+    const textCol = darken(r, g, b, 0.82);
+    const textSoft= darken(r, g, b, 0.55);
+    const textMut = lighten(r, g, b, 0.25);
+    const gold    = darken(r, g, b, 0.25);
+    const goldL   = lighten(r, g, b, 0.30);
+
+    root.style.setProperty('--bg',           rgbToHex(bg.r,bg.g,bg.b));
+    root.style.setProperty('--surface',      rgbToHex(surface.r,surface.g,surface.b));
+    root.style.setProperty('--surface-2',    rgbToHex(surf2.r,surf2.g,surf2.b));
+    root.style.setProperty('--border',       rgbToHex(border.r,border.g,border.b));
+    root.style.setProperty('--text',         rgbToHex(textCol.r,textCol.g,textCol.b));
+    root.style.setProperty('--text-soft',    rgbToHex(textSoft.r,textSoft.g,textSoft.b));
+    root.style.setProperty('--text-muted',   rgbToHex(textMut.r,textMut.g,textMut.b));
+    root.style.setProperty('--gold',         rgbToHex(gold.r,gold.g,gold.b));
+    root.style.setProperty('--gold-light',   rgbToHex(goldL.r,goldL.g,goldL.b));
+    root.style.setProperty('--shortcut-bg',  `rgba(${r},${g},${b},0.08)`);
+    root.style.setProperty('--shortcut-hover',`rgba(${r},${g},${b},0.15)`);
+  }
+
+  // Sync the input swatch
+  const input = document.getElementById('colour-input');
+  if (input) input.value = hex;
+}
+
+function initColour() {
+  const saved = localStorage.getItem(COLOUR_KEY) || DEFAULT_COLOUR;
+  applyColour(saved);
+}
+
+document.getElementById('colour-input').addEventListener('input', function () {
+  localStorage.setItem(COLOUR_KEY, this.value);
+  applyColour(this.value);
+});
+
+
+
+initColour();
+
+
+// ─────────────────────────────────────────────
 // SHORTCUTS (chrome.topSites)
-
+// ─────────────────────────────────────────────
 
 function buildShortcuts() {
-  // chrome.topSites is only available inside Chrome extensions
   if (!chrome?.topSites) return;
-
   chrome.topSites.get(sites => {
     const container = document.getElementById('shortcuts');
-    // Show up to 8 sites in a 4-column grid (2 rows)
-    sites.slice(0, 8).forEach(site => {
-      const a = document.createElement('a');
-      a.href      = site.url;
-      a.className = 'shortcut';
-
-      // Get the favicon via Google's favicon service
-      const domain  = new URL(site.url).hostname;
-      const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
-
-      // Truncate long titles to keep the grid tidy
-      const title = site.title.length > 12 ? site.title.slice(0, 12) + '…' : site.title;
-
-      a.innerHTML = `
+    sites.slice(0, 4).forEach(site => {
+      const a      = document.createElement('a');
+      a.href       = site.url;
+      a.className  = 'shortcut';
+      const domain = new URL(site.url).hostname;
+      const icon   = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+      const title  = site.title.length > 12 ? site.title.slice(0, 12) + '…' : site.title;
+      a.innerHTML  = `
         <div class="shortcut__icon">
-          <img src="${iconUrl}" alt="${title}" onerror="this.style.display='none'" />
+          <img src="${icon}" alt="${title}" onerror="this.style.display='none'" />
         </div>
         <span class="shortcut__label">${title}</span>
       `;
@@ -137,8 +232,9 @@ function buildShortcuts() {
 }
 
 
+// ─────────────────────────────────────────────
 // VERSE SELECTION (date-seeded, stable all day)
-
+// ─────────────────────────────────────────────
 
 function getTodayVerse() {
   const now  = new Date();
@@ -154,9 +250,9 @@ function getTodayVerse() {
 }
 
 
-// 
+// ─────────────────────────────────────────────
 // API FETCHING
-// 
+// ─────────────────────────────────────────────
 
 async function fetchAyah(surah, ayah, edition) {
   const res = await fetch(`${API_BASE}/${surah}:${ayah}/${edition}`);
@@ -166,9 +262,9 @@ async function fetchAyah(surah, ayah, edition) {
 }
 
 
-// 
+// ─────────────────────────────────────────────
 // LANGUAGE DROPDOWN
-
+// ─────────────────────────────────────────────
 
 function buildDropdown() {
   const select = document.getElementById('lang-select');
@@ -196,9 +292,9 @@ function getSelectedTafseerID() {
 }
 
 
-
+// ─────────────────────────────────────────────
 // TAFSEER PANEL
-
+// ─────────────────────────────────────────────
 
 function hideTafseer() {
   const panel = document.getElementById('tafseer-panel');
@@ -212,20 +308,17 @@ async function toggleTafseer() {
   const panel = document.getElementById('tafseer-panel');
   const btn   = document.getElementById('tafseer-btn');
 
-  if (panel.style.display === 'block') {
-    hideTafseer();
-    return;
-  }
+  if (panel.style.display === 'block') { hideTafseer(); return; }
 
   panel.style.display = 'block';
-  panel.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
-  btn.textContent = 'Hide Tafseer';
+  panel.innerHTML     = '<span class="dots"><span></span><span></span><span></span></span>';
+  btn.textContent     = 'Hide Tafseer';
 
   const { surah, ayah } = getTodayVerse();
   const tafseerID       = getSelectedTafseerID();
 
   try {
-    const res = await fetch(`https://api.quran.com/api/v4/tafsirs/${tafseerID}/by_ayah/${surah}:${ayah}`);
+    const res  = await fetch(`https://api.quran.com/api/v4/tafsirs/${tafseerID}/by_ayah/${surah}:${ayah}`);
     if (!res.ok) throw new Error(res.status);
     const json = await res.json();
     const raw  = json.tafsir?.text || json.tafsirs?.[0]?.text || '';
@@ -237,7 +330,9 @@ async function toggleTafseer() {
 }
 
 
+// ─────────────────────────────────────────────
 // MAIN: LOAD AND DISPLAY THE VERSE
+// ─────────────────────────────────────────────
 
 async function loadVerse() {
   const { surah, ayah } = getTodayVerse();
@@ -254,12 +349,10 @@ async function loadVerse() {
       fetchAyah(surah, ayah, ARABIC_EDITION),
       fetchAyah(surah, ayah, selectedEdition)
     ]);
-
     arabicEl.textContent = arabicText;
     transEl.textContent  = transText;
     refEl.textContent    = `Surah ${SURAH_NAMES[surah - 1]}  ·  ${surah}:${ayah}`;
     transEl.classList.toggle('urdu', selectedEdition === 'ur.ahmedali');
-
   } catch (err) {
     arabicEl.textContent = '';
     transEl.textContent  = 'Could not load verse — check your connection.';
@@ -267,8 +360,10 @@ async function loadVerse() {
   }
 }
 
-// SEARCH BAR
 
+// ─────────────────────────────────────────────
+// SEARCH BAR
+// ─────────────────────────────────────────────
 
 function doSearch(lucky) {
   const query = document.getElementById('search-input').value.trim();
@@ -279,73 +374,36 @@ function doSearch(lucky) {
   window.location.href = base + encodeURIComponent(query);
 }
 
-document.getElementById('search-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') doSearch(false);
-});
-document.getElementById('google-search-btn').addEventListener('click', () => doSearch(false));
-document.getElementById('lucky-btn').addEventListener('click',         () => doSearch(true));
+document.getElementById('search-input').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(false); });
 document.getElementById('tafseer-btn').addEventListener('click',       toggleTafseer);
 
 
-// CLOCK
+// ─────────────────────────────────────────────
+// DATE
+// ─────────────────────────────────────────────
 
 function updateDate() {
   const now  = new Date();
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const gregorianMonths = ['January','February','March','April','May','June',
                            'July','August','September','October','November','December'];
-
-  // Gregorian date e.g. "Sunday, 15 March 2026"
   const gregorian = `${days[now.getDay()]}, ${now.getDate()} ${gregorianMonths[now.getMonth()]} ${now.getFullYear()}`;
-
-  // Islamic (Hijri) date using the built-in Intl API with islamic-umalqura calendar
-  // Same calendar used in Saudi Arabia, widely accepted
   let hijri = '';
   try {
     hijri = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura', {
       day: 'numeric', month: 'long', year: 'numeric'
     }).format(now);
-  } catch {
-    hijri = '';
-  }
-
+  } catch { hijri = ''; }
   const el = document.getElementById('clock');
   el.innerHTML = hijri ? `${gregorian} &nbsp;·&nbsp; ${hijri}` : gregorian;
 }
+
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
 
 updateDate();
 buildShortcuts();
 buildDropdown();
 loadVerse();
-
-
-
-// COLOUR THEMES
-
-
-const COLOUR_KEY = 'quran-ext-colour';
-
-function applyColour(colour) {
-  // Set or remove data-colour on <html> — 'default' uses the base :root variables
-  if (colour && colour !== 'default') {
-    document.documentElement.setAttribute('data-colour', colour);
-  } else {
-    document.documentElement.removeAttribute('data-colour');
-  }
-}
-
-function initColour() {
-  const saved = localStorage.getItem(COLOUR_KEY) || 'default';
-  // Restore the dropdown to the saved value
-  const select = document.getElementById('colour-select');
-  if (select) select.value = saved;
-  applyColour(saved);
-}
-
-// Save and apply when user picks from the dropdown
-document.getElementById('colour-select').addEventListener('change', function () {
-  localStorage.setItem(COLOUR_KEY, this.value);
-  applyColour(this.value);
-});
-
-initColour();

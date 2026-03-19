@@ -10,7 +10,7 @@
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* Light theme  */
+    /* ── Light theme (default) ── */
     :root {
       --bg:           #f8f7f4;
       --surface:      #ffffff;
@@ -56,13 +56,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       min-height: 100vh;
-      padding: 16px 24px 24px;
+      padding-top: 10vh;
+      padding-left: 24px;
+      padding-right: 24px;
+      padding-bottom: 80px;
       gap: 0;
     }
 
-    /* Dark mode toggle */
+    /* ── Dark mode toggle ── */
     .theme-toggle {
       position: fixed;
       bottom: 44px;
@@ -85,7 +88,7 @@
     }
     .theme-toggle:hover { background: var(--surface-2); }
 
-    /* Date display */
+    /* ── Date display ── */
     .clock {
       font-size: 0.78rem;
       letter-spacing: 0.12em;
@@ -94,20 +97,20 @@
       animation: fadeUp 0.6s ease both;
     }
 
-    /* Search block*/
+    /* ── Search block ── */
     .search-block {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 12px;
       width: 100%;
-      max-width: 580px;
+      max-width: 720px;
       animation: fadeUp 0.6s 0.1s ease both;
     }
 
-    .google-logo { height: 36px; }
+    .google-logo { height: 92px; }
 
-    /* Dark mode */
+    /* Dark mode: invert the Google logo slightly so it doesn't look washed out */
     [data-theme="dark"] .google-logo { filter: brightness(0.9); }
 
     .search-bar {
@@ -127,27 +130,16 @@
     .search-bar input {
       flex: 1; border: none; outline: none;
       background: transparent; font-family: inherit;
-      font-size: 1rem; color: var(--text); padding: 14px 0;
+      font-size: 1rem; color: var(--text); padding: 16px 0;
     }
     .search-bar input::placeholder { color: var(--text-muted); }
 
-    .search-buttons { display: flex; gap: 10px; }
-    .search-btn {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 6px; padding: 9px 18px;
-      font-family: inherit; font-size: 0.85rem;
-      color: var(--text-soft); cursor: pointer;
-      transition: background 0.15s;
-    }
-    .search-btn:hover { filter: brightness(0.95); }
-
-    /* Shortcuts grid */
+    /* ── Shortcuts grid ── */
     .shortcuts {
       display: grid;
-      grid-template-columns: repeat(4, 72px);
-      gap: 6px;
-      margin-top: 10px;
+      grid-template-columns: repeat(4, 96px);
+      gap: 16px;
+      margin-top: 12px;
       animation: fadeUp 0.6s 0.2s ease both;
     }
 
@@ -158,22 +150,20 @@
       gap: 8px;
       cursor: pointer;
       text-decoration: none;
-      padding: 6px 4px;
+      padding: 10px 6px;
       border-radius: 12px;
       transition: background 0.15s;
     }
     .shortcut:hover { background: var(--shortcut-hover); }
 
     .shortcut__icon {
-      width: 40px; height: 40px;
+      width: 56px; height: 56px;
       border-radius: 50%;
       background: var(--shortcut-bg);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.3rem;
       overflow: hidden;
-      transition: background 0.15s;
     }
 
     .shortcut__icon img {
@@ -182,21 +172,21 @@
     }
 
     .shortcut__label {
-      font-family: 'Lora', serif;
-      font-size: 0.72rem;
+      font-family: arial, sans-serif;
+      font-size: 0.75rem;
       color: var(--text-soft);
       text-align: center;
-      max-width: 72px;
+      max-width: 80px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    /* Divider */
+    /* ── Divider ── */
     .divider {
       display: flex; align-items: center; gap: 14px;
-      width: 100%; max-width: 480px;
-      margin: 20px 0 0;
+      width: 100%; max-width: 620px;
+      margin: 10px 0 0;
       animation: fadeUp 0.6s 0.3s ease both;
     }
     .divider__line { flex: 1; height: 1px; background: var(--border); }
@@ -209,21 +199,21 @@
       transform: rotate(45deg); flex-shrink: 0;
     }
 
-    /* Verse card */
+    /* ── Verse card ── */
     .verse-card {
-      width: 100%; max-width: 580px;
+      width: 100%; max-width: 720px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 16px;
-      padding: 20px 32px 18px;
+      padding: 14px 28px 14px;
       box-shadow: var(--shadow);
       text-align: center;
-      margin-top: 10px;
+      margin-top: 8px;
       animation: fadeUp 0.6s 0.4s ease both;
       transition: background 0.3s, border-color 0.3s;
     }
 
-    /* Language dropdown*/
+    /* ── Language dropdown ── */
     .lang-row {
       display: flex; justify-content: flex-end;
       margin-bottom: 12px;
@@ -250,14 +240,14 @@
     /* ── Arabic ── */
     .verse-arabic {
       font-family: 'Amiri', serif;
-      font-size: 1.4rem; line-height: 1.8; direction: rtl;
+      font-size: 1.2rem; line-height: 1.6; direction: rtl;
       color: var(--text); margin-bottom: 10px;
       min-height: 2em; display: flex; align-items: center; justify-content: center;
     }
 
     /* ── Translation ── */
     .verse-translation {
-      font-size: 0.88rem; font-style: italic; line-height: 1.7;
+      font-size: 0.82rem; font-style: italic; line-height: 1.6;
       color: var(--text-soft); margin-bottom: 10px;
       min-height: 2em; display: flex; align-items: center; justify-content: center;
     }
@@ -267,14 +257,14 @@
       line-height: 2.2; direction: rtl;
     }
 
-    /* Reference  */
+    /* ── Reference ── */
     .verse-ref {
       font-size: 0.7rem; letter-spacing: 0.15em;
       text-transform: uppercase; color: var(--gold);
-      margin-bottom: 16px;
+      margin-bottom: 10px;
     }
 
-    /* Tafseer button  */
+    /* ── Tafseer button ── */
     #tafseer-btn {
       background: none;
       border: 1px solid var(--border);
@@ -285,7 +275,7 @@
     }
     #tafseer-btn:hover { border-color: var(--gold-light); color: var(--gold); }
 
-    /*  Tafseer panel */
+    /* ── Tafseer panel ── */
     #tafseer-panel {
       display: none;
       margin-top: 18px; padding-top: 18px;
@@ -294,7 +284,7 @@
       color: var(--text-soft); text-align: left;
     }
 
-    /* Loading dots*/
+    /* ── Loading dots ── */
     .dots { display: inline-flex; gap: 5px; align-items: center; }
     .dots span {
       width: 5px; height: 5px; background: var(--gold-light);
@@ -312,7 +302,7 @@
       to   { opacity: 1; transform: translateY(0);    }
     }
 
-    /* Google top bar  */
+    /* ── Google top bar ── */
     .google-bar {
       position: fixed;
       top: 0; right: 0;
@@ -352,7 +342,7 @@
     }
     .google-bar__profile:hover { box-shadow: 0 0 0 3px rgba(138,180,248,0.3); }
 
-    /* Credits footer */
+    /* ── Credits footer ── */
     .credits {
       position: fixed;
       bottom: 12px;
@@ -380,7 +370,11 @@
       opacity: 0.5;
     }
 
-    /*COLOUR THEMES */
+    /* ══ COLOUR THEMES ══
+       Each theme overrides the base CSS variables.
+       Dark mode versions are handled by combining [data-theme="dark"]
+       with [data-colour="..."] selectors below.
+    ══════════════════════ */
 
     /* Desert — warm sandy parchment */
     [data-colour="desert"] {
@@ -468,7 +462,7 @@
 
     
 
-    /* Theme colour dropdown */
+    /* ── Theme colour dropdown ── */
     .colour-picker {
       position: fixed;
       bottom: 12px;
@@ -536,11 +530,6 @@
       <input type="text" placeholder="Search Google or type a URL" id="search-input" autocomplete="off" />
     </div>
 
-    <div class="search-buttons">
-      <button class="search-btn" id="google-search-btn">Google Search</button>
-      <button class="search-btn" id="lucky-btn">I'm Feeling Lucky</button>
-    </div>
-
     <!-- Top sites shortcuts grid — populated by JS via chrome.topSites API -->
     <div class="shortcuts" id="shortcuts"></div>
   </div>
@@ -571,18 +560,10 @@
   </div>
 
 
-  <!-- Colour theme picker -->
+  <!-- Colour theme picker — opens OS native colour picker -->
   <div class="colour-picker">
-    <label for="colour-select">Theme</label>
-    <select id="colour-select">
-      <option value="default">Default</option>
-      <option value="desert">Desert</option>
-      <option value="forest">Forest</option>
-      <option value="ocean">Ocean</option>
-      <option value="rose">Rose</option>
-      <option value="midnight">Midnight</option>
-      <option value="mono">Monochrome</option>
-    </select>
+    <label for="colour-input">Colour</label>
+    <input type="color" id="colour-input" title="Pick accent colour" />
   </div>
 
   <!-- Source credits — important for Quran accuracy transparency -->
@@ -593,7 +574,6 @@
     <div class="credits__dot"></div>
     <span>Editions: <a href="https://alquran.cloud/api" target="_blank">View sources</a></span>
   </div>
-
   <script src="newtab.js"></script>
 </body>
 </html>
