@@ -296,12 +296,17 @@ function getSelectedTafseerID() {
 // TAFSEER PANEL
 // ─────────────────────────────────────────────
 
+// Current font size in px — starts at 13, can go from 10 to 20
+let tafseerFontSize = 13;
+
 function hideTafseer() {
-  const panel = document.getElementById('tafseer-panel');
-  const btn   = document.getElementById('tafseer-btn');
-  panel.style.display = 'none';
-  panel.textContent   = '';
-  btn.textContent     = 'Show Tafseer';
+  const panel    = document.getElementById('tafseer-panel');
+  const btn      = document.getElementById('tafseer-btn');
+  const controls = document.getElementById('tafseer-controls');
+  panel.style.display    = 'none';
+  panel.textContent      = '';
+  btn.textContent        = 'Show Tafseer';
+  controls.classList.remove('visible');
 }
 
 async function toggleTafseer() {
@@ -313,8 +318,10 @@ async function toggleTafseer() {
   panel.style.display = 'block';
   panel.innerHTML     = '<span class="dots"><span></span><span></span><span></span></span>';
   btn.textContent     = 'Hide Tafseer';
+  document.getElementById('tafseer-controls').classList.add('visible');
+  panel.style.fontSize = tafseerFontSize + 'px';
 
-  const { surah, ayah } = getTodayVerse();
+  const { surah, ayah } = getVerse();
   const tafseerID       = getSelectedTafseerID();
 
   try {
@@ -322,7 +329,14 @@ async function toggleTafseer() {
     if (!res.ok) throw new Error(res.status);
     const json = await res.json();
     const raw  = json.tafsir?.text || json.tafsirs?.[0]?.text || '';
-    panel.textContent = raw.replace(/<[^>]*>/g, '').trim() || 'No tafseer available for this verse.';
+    // Strip HTML tags, then split on double newlines or sentence breaks to form paragraphs
+    const clean = raw.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!clean) { panel.textContent = 'No tafseer available for this verse.'; }
+    else {
+      // Split into paragraphs on double spaces or long gaps left by removed HTML tags
+      const paragraphs = clean.split(/(?<=\.) {2,}/).filter(p => p.trim().length > 0);
+      panel.innerHTML = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
+    }
   } catch (err) {
     panel.textContent = 'Tafseer could not be loaded.';
     console.error('Tafseer error:', err);
@@ -335,7 +349,7 @@ async function toggleTafseer() {
 // ─────────────────────────────────────────────
 
 async function loadVerse() {
-  const { surah, ayah } = getTodayVerse();
+  const { surah, ayah } = getVerse();
   const arabicEl        = document.getElementById('arabic');
   const transEl         = document.getElementById('translation');
   const refEl           = document.getElementById('ref');
@@ -397,6 +411,367 @@ function updateDate() {
   const el = document.getElementById('clock');
   el.innerHTML = hijri ? `${gregorian} &nbsp;·&nbsp; ${hijri}` : gregorian;
 }
+
+
+// ─────────────────────────────────────────────
+// TAFSEER FONT SIZE
+// ─────────────────────────────────────────────
+
+document.getElementById('font-increase').addEventListener('click', () => {
+  if (tafseerFontSize >= 20) return;
+  tafseerFontSize++;
+  document.getElementById('tafseer-panel').style.fontSize = tafseerFontSize + 'px';
+});
+
+document.getElementById('font-decrease').addEventListener('click', () => {
+  if (tafseerFontSize <= 10) return;
+  tafseerFontSize--;
+  document.getElementById('tafseer-panel').style.fontSize = tafseerFontSize + 'px';
+});
+
+
+
+// ─────────────────────────────────────────────
+// BACKGROUND IMAGE (uses IndexedDB for large file support)
+// ─────────────────────────────────────────────
+
+// IndexedDB can store much larger files than localStorage (hundreds of MB vs ~5MB)
+// We open a database called 'quran-ext' with an object store called 'bg'
+
+const DB_NAME    = 'quran-ext';
+const DB_VERSION = 1;
+const DB_STORE   = 'bg';
+const BG_KEY     = 'background';
+
+// Opens (or creates) the IndexedDB database and returns it
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    // Called when the database is first created or upgraded
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE); // simple key-value store
+      }
+    };
+
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+// Saves a value to IndexedDB under the given key
+async function dbSet(key, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(DB_STORE, 'readwrite');
+    const req = tx.objectStore(DB_STORE).put(value, key);
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+// Retrieves a value from IndexedDB by key
+async function dbGet(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(DB_STORE, 'readonly');
+    const req = tx.objectStore(DB_STORE).get(key);
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+// Deletes a value from IndexedDB by key
+async function dbDelete(key) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx  = db.transaction(DB_STORE, 'readwrite');
+    const req = tx.objectStore(DB_STORE).delete(key);
+    req.onsuccess = () => resolve();
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+// Applies a base64 image string as the page background
+function applyBackground(dataUrl) {
+  if (dataUrl) {
+    document.body.style.backgroundImage = `url(${dataUrl})`;
+    document.body.classList.add('has-bg');
+    document.getElementById('bg-remove-btn').classList.add('visible');
+  } else {
+    document.body.style.backgroundImage = '';
+    document.body.classList.remove('has-bg');
+    document.getElementById('bg-remove-btn').classList.remove('visible');
+  }
+}
+
+// Load saved background from IndexedDB on startup
+async function initBackground() {
+  try {
+    const saved = await dbGet(BG_KEY);
+    if (saved) applyBackground(saved);
+  } catch (e) {
+    console.error('Could not load background:', e);
+  }
+}
+
+// Trigger file picker when button is clicked
+document.getElementById('bg-upload-btn').addEventListener('click', () => {
+  document.getElementById('bg-file-input').click();
+});
+
+// When a file is selected, read it as base64 and save to IndexedDB
+document.getElementById('bg-file-input').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async function (e) {
+    const dataUrl = e.target.result;
+    console.log('Image read, length:', dataUrl.length);
+    try {
+      await dbSet(BG_KEY, dataUrl);
+      console.log('Saved to IndexedDB');
+    } catch (err) {
+      console.error('Could not save background:', err);
+    }
+    console.log('Applying background...');
+    applyBackground(dataUrl);
+    console.log('Done. has-bg:', document.body.classList.contains('has-bg'));
+  };
+  reader.readAsDataURL(file);
+});
+
+// Remove button clears the background from IndexedDB and the page
+document.getElementById('bg-remove-btn').addEventListener('click', async () => {
+  await dbDelete(BG_KEY);
+  applyBackground(null);
+  document.getElementById('bg-file-input').value = '';
+});
+
+initBackground();
+
+
+// ─────────────────────────────────────────────
+// VERSE MODE (daily vs random)
+// ─────────────────────────────────────────────
+
+const MODE_KEY = 'quran-ext-mode'; // 'daily' or 'random'
+
+function getVerseMode() {
+  return localStorage.getItem(MODE_KEY) || 'daily';
+}
+
+// Override getTodayVerse to respect the mode setting
+const _origGetTodayVerse = getTodayVerse;
+function getVerse() {
+  if (getVerseMode() === 'random') {
+    // Pure random — new verse every tab open
+    const surah = Math.floor(Math.random() * 114) + 1;
+    const ayah  = Math.floor(Math.random() * SURAH_LENGTHS[surah - 1]) + 1;
+    return { surah, ayah };
+  }
+  return _origGetTodayVerse();
+}
+
+function initVerseMode() {
+  const mode = getVerseMode();
+  document.getElementById('mode-daily').classList.toggle('active', mode === 'daily');
+  document.getElementById('mode-random').classList.toggle('active', mode === 'random');
+}
+
+document.getElementById('mode-daily').addEventListener('click', () => {
+  localStorage.setItem(MODE_KEY, 'daily');
+  initVerseMode();
+  loadVerse();
+});
+
+document.getElementById('mode-random').addEventListener('click', () => {
+  localStorage.setItem(MODE_KEY, 'random');
+  initVerseMode();
+  loadVerse();
+});
+
+initVerseMode();
+
+
+// ─────────────────────────────────────────────
+// PRAYER TIMES
+// ─────────────────────────────────────────────
+
+const PRAYER_CITY_KEY = 'quran-ext-prayer-city';
+const PRAYER_NAMES    = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+const PRAYER_KEYS     = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+
+// Fetches prayer times from aladhan.com API using lat/lng
+async function fetchPrayersByCoords(lat, lng) {
+  const today = new Date();
+  const date  = `${today.getDate()}-${today.getMonth()+1}-${today.getFullYear()}`;
+  const res   = await fetch(`https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lng}&method=2`);
+  if (!res.ok) throw new Error('Failed to fetch');
+  const json  = await res.json();
+  return json.data.timings;
+}
+
+// Fetches prayer times by city name
+async function fetchPrayersByCity(city) {
+  const today = new Date();
+  const date  = `${today.getDate()}-${today.getMonth()+1}-${today.getFullYear()}`;
+  const res   = await fetch(`https://api.aladhan.com/v1/timingsByCity/${date}?city=${encodeURIComponent(city)}&country=&method=2`);
+  if (!res.ok) throw new Error('City not found');
+  const json  = await res.json();
+  return json.data.timings;
+}
+
+// Works out which prayer is next based on current time
+function getNextPrayer(timings) {
+  const now   = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  for (const name of PRAYER_KEYS) {
+    const [h, m] = timings[name].split(':').map(Number);
+    if (h * 60 + m > nowMins) return name;
+  }
+  return 'Fajr'; // wrap to next day Fajr
+}
+
+// Renders prayer times into the panel
+function renderPrayers(timings) {
+  const list = document.getElementById('prayer-times-list');
+  const next = getNextPrayer(timings);
+  list.innerHTML = PRAYER_KEYS.map(name => `
+    <div class="prayer-row ${name === next ? 'next' : ''}">
+      <span class="prayer-row__name">${name}</span>
+      <span class="prayer-row__time">${timings[name]}</span>
+    </div>
+  `).join('');
+}
+
+// Main load function — tries auto location first, falls back to saved city
+async function loadPrayerTimes(cityOverride) {
+  const list = document.getElementById('prayer-times-list');
+  list.innerHTML = '<div class="prayer-status">Loading...</div>';
+
+  try {
+    let timings;
+    if (cityOverride) {
+      // User typed a city manually
+      localStorage.setItem(PRAYER_CITY_KEY, cityOverride);
+      timings = await fetchPrayersByCity(cityOverride);
+    } else {
+      const savedCity = localStorage.getItem(PRAYER_CITY_KEY);
+      if (savedCity) {
+        // Use previously saved city
+        timings = await fetchPrayersByCity(savedCity);
+        document.getElementById('prayer-city-input').value = savedCity;
+      } else {
+        // Auto-detect using browser geolocation
+        const pos = await new Promise((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+        );
+        timings = await fetchPrayersByCoords(pos.coords.latitude, pos.coords.longitude);
+      }
+    }
+    renderPrayers(timings);
+  } catch (err) {
+    list.innerHTML = '<div class="prayer-status">Could not load. Enter your city below.</div>';
+  }
+}
+
+// Toggle prayer panel open/close
+let prayerLoaded = false;
+document.getElementById('prayer-toggle-btn').addEventListener('click', () => {
+  const panel = document.getElementById('prayer-panel');
+  panel.classList.toggle('open');
+  // Only fetch on first open
+  if (panel.classList.contains('open') && !prayerLoaded) {
+    prayerLoaded = true;
+    loadPrayerTimes(null);
+  }
+});
+
+// ── City autocomplete ──
+// Uses Open-Meteo's free geocoding API to search cities by name
+// Returns results with city name, country, and coordinates
+let autocompleteTimer = null;
+let selectedLat = null;
+let selectedLng = null;
+let selectedCityName = null;
+
+async function searchCities(query) {
+  const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`);
+  if (!res.ok) return [];
+  const json = await res.json();
+  return json.results || [];
+}
+
+function showSuggestions(results) {
+  const box = document.getElementById('city-suggestions');
+  box.innerHTML = '';
+  if (!results.length) { box.classList.remove('open'); return; }
+
+  results.forEach(city => {
+    const div = document.createElement('div');
+    div.className = 'city-suggestion';
+    // Show city name + region + country so users can distinguish e.g. London ON vs London UK
+    const parts = [city.name, city.admin1, city.country].filter(Boolean);
+    div.textContent = parts.join(', ');
+
+    div.addEventListener('click', () => {
+      // Store the exact coordinates for this city
+      selectedLat      = city.latitude;
+      selectedLng      = city.longitude;
+      selectedCityName = parts.join(', ');
+
+      document.getElementById('prayer-city-input').value = selectedCityName;
+      localStorage.setItem(PRAYER_CITY_KEY, selectedCityName);
+      box.classList.remove('open');
+
+      // Fetch prayer times using the exact coordinates
+      loadPrayerTimesByCoords(selectedLat, selectedLng);
+    });
+
+    box.appendChild(div);
+  });
+  box.classList.add('open');
+}
+
+// Separate fetch function that takes coords directly
+async function loadPrayerTimesByCoords(lat, lng) {
+  const list = document.getElementById('prayer-times-list');
+  list.innerHTML = '<div class="prayer-status">Loading...</div>';
+  try {
+    const timings = await fetchPrayersByCoords(lat, lng);
+    renderPrayers(timings);
+  } catch {
+    list.innerHTML = '<div class="prayer-status">Could not load prayer times.</div>';
+  }
+}
+
+// Trigger autocomplete search as user types, with a small delay
+document.getElementById('prayer-city-input').addEventListener('input', function () {
+  const query = this.value.trim();
+  clearTimeout(autocompleteTimer);
+
+  if (query.length < 2) {
+    document.getElementById('city-suggestions').classList.remove('open');
+    return;
+  }
+
+  // Wait 300ms after user stops typing before searching
+  autocompleteTimer = setTimeout(async () => {
+    const results = await searchCities(query);
+    showSuggestions(results);
+  }, 300);
+});
+
+// Close suggestions if user clicks outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.prayer-location')) {
+    document.getElementById('city-suggestions').classList.remove('open');
+  }
+});
 
 
 // ─────────────────────────────────────────────

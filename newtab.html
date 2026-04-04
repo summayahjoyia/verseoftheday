@@ -280,8 +280,16 @@
       display: none;
       margin-top: 18px; padding-top: 18px;
       border-top: 1px solid var(--border);
-      font-size: 0.85rem; line-height: 1.85;
+      font-size: 0.83rem; line-height: 1.85;
       color: var(--text-soft); text-align: left;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    #tafseer-panel p {
+      margin-bottom: 12px;
+    }
+    #tafseer-panel p:last-child {
+      margin-bottom: 0;
     }
 
     /* ── Loading dots ── */
@@ -498,6 +506,247 @@
     }
     #colour-select:hover { border-color: var(--gold-light); }
     #colour-select:focus { border-color: var(--gold); }
+
+    /* ── Tafseer font controls ── */
+    .tafseer-controls {
+      display: none;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+    .tafseer-controls.visible { display: flex; }
+
+    .font-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-family: arial, sans-serif;
+      font-size: 0.78rem;
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: background 0.15s;
+      line-height: 1.4;
+    }
+    .font-btn:hover { background: var(--border); }
+    .font-size-label {
+      font-family: arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Random vs Daily toggle ── */
+    .verse-mode-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .verse-mode-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-family: arial, sans-serif;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .verse-mode-btn.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: white;
+    }
+
+    /* ── Prayer times widget ── */
+    .prayer-widget {
+      position: fixed;
+      bottom: 12px;
+      right: 16px;
+      display: flex;
+      flex-direction: column-reverse;
+      z-index: 100;
+      width: 220px;
+    }
+
+    .prayer-toggle-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5px 14px;
+      font-family: arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+      width: 100%;
+      text-align: center;
+    }
+    .prayer-toggle-btn:hover { background: var(--surface-2); }
+
+    .prayer-panel {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      box-shadow: var(--shadow);
+    }
+    .prayer-panel.open { display: block; }
+
+    .prayer-panel h4 {
+      font-family: arial, sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .prayer-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-family: arial, sans-serif;
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .prayer-row:last-of-type { border-bottom: none; }
+    .prayer-row__name { color: var(--text-soft); }
+    .prayer-row__time { color: var(--text); font-weight: 500; }
+    .prayer-row.next .prayer-row__name,
+    .prayer-row.next .prayer-row__time { color: var(--gold); font-weight: 600; }
+
+    .prayer-location {
+      position: relative;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .prayer-location input {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text);
+      outline: none;
+      box-sizing: border-box;
+    }
+    .prayer-location input:focus { border-color: var(--gold); }
+
+    /* Autocomplete dropdown */
+    .city-suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0 0 8px 8px;
+      box-shadow: var(--shadow);
+      z-index: 200;
+      max-height: 160px;
+      overflow-y: auto;
+      display: none;
+    }
+    .city-suggestions.open { display: block; }
+    .city-suggestion {
+      padding: 7px 10px;
+      font-family: arial, sans-serif;
+      font-size: 0.72rem;
+      color: var(--text-soft);
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+    }
+    .city-suggestion:last-child { border-bottom: none; }
+    .city-suggestion:hover { background: var(--surface-2); color: var(--text); }
+    .prayer-status {
+      font-family: arial, sans-serif;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 8px 0;
+    }
+
+    /* ── Background image ── */
+    body.has-bg {
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-attachment: fixed !important;
+    }
+    /* When bg image is active — light mode */
+    body.has-bg .verse-card,
+    body.has-bg .search-bar,
+    body.has-bg .prayer-panel,
+    body.has-bg .colour-picker,
+    body.has-bg .credits {
+      background: rgba(255,255,255,0.82) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.2) !important;
+    }
+
+    /* When bg image is active — dark mode */
+    [data-theme=dark] body.has-bg .verse-card,
+    [data-theme=dark] body.has-bg .search-bar,
+    [data-theme=dark] body.has-bg .prayer-panel,
+    [data-theme=dark] body.has-bg .colour-picker,
+    [data-theme=dark] body.has-bg .credits {
+      background: rgba(0,0,0,0.65) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+    }
+
+    /* Text elements that sit directly on the bg — add shadow for legibility */
+    body.has-bg .clock,
+    body.has-bg .shortcut__label,
+    body.has-bg .divider__label,
+    body.has-bg .google-bar a,
+    body.has-bg .credits a {
+      text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+      color: #ffffff !important;
+    }
+
+    /* Shortcut icons get a dark backdrop so they pop */
+    body.has-bg .shortcut__icon {
+      background: rgba(0,0,0,0.35) !important;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Divider lines */
+    body.has-bg .divider__line {
+      background: rgba(255,255,255,0.4) !important;
+    }
+    body.has-bg .divider__gem {
+      background: rgba(255,255,255,0.7) !important;
+    }
+
+    /* Search bar input text stays readable */
+    body.has-bg .search-bar input {
+      color: var(--text) !important;
+    }
+
+    /* Dark semi-transparent overlay across the whole page for contrast */
+    body.has-bg::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.25);
+      z-index: -1;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -543,6 +792,12 @@
   </div>
 
   <div class="verse-card">
+    <!-- Daily vs Random verse mode toggle -->
+    <div class="verse-mode-toggle">
+      <button class="verse-mode-btn active" id="mode-daily">Daily</button>
+      <button class="verse-mode-btn" id="mode-random">Random</button>
+    </div>
+
     <div class="lang-row">
       <div class="lang-select-wrapper">
         <select id="lang-select"></select>
@@ -556,14 +811,38 @@
     </div>
     <div class="verse-ref" id="ref"></div>
     <button id="tafseer-btn">Show Tafseer</button>
+
+    <!-- Font size controls — only visible when tafseer is open -->
+    <div class="tafseer-controls" id="tafseer-controls">
+      <span class="font-size-label">Text size</span>
+      <button class="font-btn" id="font-decrease">A−</button>
+      <button class="font-btn" id="font-increase">A+</button>
+    </div>
+
     <div id="tafseer-panel"></div>
   </div>
 
 
-  <!-- Colour theme picker — opens OS native colour picker -->
+  <!-- Colour + background controls grouped together -->
   <div class="colour-picker">
     <label for="colour-input">Colour</label>
     <input type="color" id="colour-input" title="Pick accent colour" />
+    <button class="bg-btn" id="bg-upload-btn">🖼</button>
+    <button class="bg-btn bg-btn--remove" id="bg-remove-btn">✕ BG</button>
+    <input type="file" id="bg-file-input" accept="image/*" style="display:none" />
+  </div>
+
+  <!-- Prayer times widget -->
+  <div class="prayer-widget">
+    <div class="prayer-panel" id="prayer-panel">
+      <h4>🕌 Prayer Times</h4>
+      <div id="prayer-times-list"><div class="prayer-status">Loading...</div></div>
+      <div class="prayer-location">
+        <input type="text" id="prayer-city-input" placeholder="Search city..." autocomplete="off" />
+        <div class="city-suggestions" id="city-suggestions"></div>
+      </div>
+    </div>
+    <button class="prayer-toggle-btn" id="prayer-toggle-btn">🕌 Prayer Times</button>
   </div>
 
   <!-- Source credits — important for Quran accuracy transparency -->

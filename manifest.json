@@ -9,7 +9,9 @@
   "permissions": ["topSites"],
   "host_permissions": [
     "https://api.alquran.cloud/*",
-    "https://api.quran.com/*"
+    "https://api.quran.com/*",
+    "https://api.aladhan.com/*",
+    "https://geocoding-api.open-meteo.com/*"
   ],
   "icons": {
     "16": "icon.png",
