@@ -19,18 +19,8 @@ A Chrome extension that replaces your new tab page with a beautiful daily Quran 
 - ⭐ **Top sites shortcuts** — your most visited sites at a glance
 
 ---
-
-## 🛠 Manual Installation (Developer Mode)
-
-Until the extension is live on the Chrome Web Store, here's how to install it:
-
-1. Download the latest zip from the [Releases](../../releases) page (or clone this repo)
-2. Unzip the folder
-3. Open Chrome and go to `chrome://extensions`
-4. Enable **Developer mode** (toggle in the top right)
-5. Click **Load unpacked**
-6. Select the `verseoftheday` folder
-7. Open a new tab ✨
+## Chrome Webstore Link 
+https://chromewebstore.google.com/detail/ekpgdjnhaihaeibmmenjicaonegbnlgf?utm_source=item-share-cb
 
 > **Note:** A small "Quran — Verse of the Day" bar will appear at the bottom of the page. This is added by Chrome for all custom new tab extensions and cannot be removed.
 
