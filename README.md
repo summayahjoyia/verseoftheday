@@ -2,11 +2,7 @@
 
 A Chrome extension that replaces your new tab page with a beautiful daily Quran verse — complete with Arabic text, translations in 15+ languages, tafseer, prayer times, and more.
 
-> Currently under review on the Chrome Web Store. In the meantime, you can install it manually using the instructions below.
-
----
-
-## ✨ Features
+## Features
 
 - 📖 **Daily verse** — a new Quran verse every day, or random on every tab
 - 🌍 **15+ language translations** — English, Urdu, French, Bengali, Russian, and more
@@ -26,7 +22,7 @@ https://chromewebstore.google.com/detail/ekpgdjnhaihaeibmmenjicaonegbnlgf?utm_so
 
 ---
 
-## 📦 Sources
+##  Sources
 
 All Quranic content is sourced from verified scholarly translations — no AI-generated content.
 
